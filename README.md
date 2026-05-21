@@ -11,7 +11,7 @@
 
 **AI-Powered Handwritten Answer Evaluator for Indian Students**
 
-*Built for the [Gemma 4 Challenge](https://dev.to/challenges/gemma) on DEV.to*
+*Built for the [Gemma 4 Challenge](https://dev.to/devteam/join-the-gemma-4-challenge-3000-prize-pool-for-ten-winners-23in) on DEV.to*
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com)

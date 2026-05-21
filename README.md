@@ -351,7 +351,7 @@ Single server → Docker + Gunicorn + Nginx
 
 ## The Story
 
-Built in Meerut, Uttar Pradesh — where millions of students prepare for UP Board and CBSE exams, often without access to instant teacher feedback. UttarCheck is designed for them.
+ Millions of students prepare for UP Board and CBSE exams, often without access to instant teacher feedback. UttarCheck is designed for them.
 
 *"Every student deserves a personal tutor available at 3am before their board exam."*
 

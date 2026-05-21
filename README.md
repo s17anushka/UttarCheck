@@ -288,13 +288,14 @@ Open `http://[your-laptop-ip]:5000` in your phone browser on the same WiFi. Came
 
 ## Parser — How It Handles Gemma 4's Output
 
-Gemma 4 doesn't always return pure JSON. It reasons through the evaluation first, then outputs JSON inside ` ```json ``` ` blocks. The parser handles this with 6 strategies in order:
+Gemma 4 does not always return pure JSON.
+It often reasons through the evaluation first, then outputs JSON inside json ... blocks or mixes prose with structured data.
 
 ```python
 1. Extract ```json ... ``` fenced block   ← Gemma 4's actual format
 2. Direct JSON parse
-3. Find block containing "score" key
-4. Find largest { ... } block
+3. Extract the largest JSON object containing evaluation fields
+4. Automatically clean markdown wrappers
 5. Fix trailing commas, retry
 6. Extract fields from bullet-point prose
 ```

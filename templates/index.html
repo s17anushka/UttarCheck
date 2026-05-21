@@ -430,11 +430,50 @@ function showResult(r){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function mkList(items,id,cls,sym){
-  const el=document.getElementById(id);el.innerHTML='';
-  (items||[]).forEach(item=>{el.innerHTML+=`<div class="list-item"><div class="ibadge ${cls}">${sym}</div><span>${item}</span></div>`;});
-  if(!items||!items.length)el.innerHTML='<div class="list-item" style="color:var(--text3)">Koi point nahi mila</div>';
+
+function mkList(items, id, cls, sym){
+
+  const el = document.getElementById(id);
+
+  el.innerHTML = '';
+
+  // Clean garbage AI outputs
+  const cleanItems = (items || []).filter(item => {
+
+    if(typeof item !== 'string') return false;
+
+    const t = item.trim();
+
+    return (
+      t.length > 2 &&
+      !['.', '-', '*', '•', 'null', 'undefined'].includes(t.toLowerCase())
+    );
+  });
+
+  cleanItems.forEach(item => {
+
+    el.innerHTML += `
+      <div class="list-item">
+        <div class="ibadge ${cls}">
+          ${sym}
+        </div>
+
+        <span>${item}</span>
+      </div>
+    `;
+  });
+
+  if(!cleanItems.length){
+
+    el.innerHTML = `
+      <div class="list-item" style="color:var(--text3)">
+        Koi point nahi mila
+      </div>
+    `;
+  }
 }
+
+
 
 function showErr(msg){
   document.getElementById('upload-section').style.display='block';

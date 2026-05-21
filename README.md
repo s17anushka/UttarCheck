@@ -359,8 +359,6 @@ Single server → Docker + Gunicorn + Nginx
 
 <div align="center">
 
-**Made for the [Gemma 4 Challenge](https://dev.to/challenges/gemma) · DEV.to · May 2026**
-
 *Built with Gemma 4 · Flask · Python · Pillow*
 
 </div>

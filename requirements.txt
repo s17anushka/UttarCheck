@@ -1,0 +1,12 @@
+flask==3.0.3
+
+# Optional — better image preprocessing
+# pip install Pillow
+# Then set USE_PILLOW=true in .env
+# Pillow==10.3.0
+
+# Optional — production server
+# gunicorn==22.0.0
+
+# Optional — testing
+# pytest==8.2.0

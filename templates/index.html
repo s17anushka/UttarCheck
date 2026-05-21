@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>UttarCheck — AI Answer Evaluator</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0A0A0F;
+  --bg2: #12121A;
+  --bg3: #1A1A26;
+  --surface: #1E1E2E;
+  --surface2: #252538;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --accent: #6C63FF;
+  --accent2: #A78BFA;
+  --accent-glow: rgba(108,99,255,0.35);
+  --gold: #F59E0B;
+  --green: #10B981;
+  --red: #F43F5E;
+  --blue: #38BDF8;
+  --purple: #C084FC;
+  --text: #F0F0FF;
+  --text2: rgba(240,240,255,0.65);
+  --text3: rgba(240,240,255,0.35);
+  --r: 20px;
+  --r-sm: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: 60px;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: -200px; left: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -150px; right: -150px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(167,139,250,0.08) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+.page { position: relative; z-index: 1; max-width: 430px; margin: 0 auto; }
+
+/* Header */
+.header { padding: 52px 24px 28px; text-align: center; }
+.header-icon {
+  width: 68px; height: 68px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+  margin: 0 auto 16px;
+  box-shadow: 0 0 48px var(--accent-glow);
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+.app-name {
+  font-size: 30px; font-weight: 800; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #fff 30%, var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.app-tagline { font-size: 13px; color: var(--text2); margin-top: 5px; font-family: 'Noto Sans Devanagari', sans-serif; }
+.gemma-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(108,99,255,0.15); border: 1px solid rgba(108,99,255,0.3);
+  border-radius: 30px; padding: 5px 14px; font-size: 11px; font-weight: 600;
+  color: var(--accent2); margin-top: 12px; letter-spacing: 0.3px;
+}
+.live-dot {
+  width: 7px; height: 7px; background: var(--green); border-radius: 50%;
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;box-shadow:0 0 6px var(--green)} 50%{opacity:0.4;box-shadow:none} }
+
+/* Section label */
+.s-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text3); padding: 0 20px; margin-bottom: 8px; margin-top: 20px; }
+
+/* Card */
+.card { margin: 0 16px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+
+/* Subject chips */
+.chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 14px 16px; }
+.chip {
+  padding: 7px 13px; border-radius: 30px; border: 1.5px solid var(--border2);
+  background: var(--bg3); font-family: 'Sora', sans-serif;
+  font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent2); background: rgba(108,99,255,0.1); }
+.chip.active { border-color: var(--accent); background: linear-gradient(135deg,rgba(108,99,255,0.25),rgba(167,139,250,0.15)); color: var(--accent2); box-shadow: 0 0 16px rgba(108,99,255,0.2); }
+
+/* Upload zone */
+.upload-zone {
+  margin: 0 16px 0; border: 2px dashed var(--border2);
+  border-radius: var(--r-sm); padding: 32px 20px;
+  text-align: center; cursor: pointer; transition: all 0.25s;
+  position: relative; background: var(--bg3);
+}
+.upload-zone.has-file, .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(108,99,255,0.07); }
+.upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.uz-icon {
+  width: 56px; height: 56px; background: linear-gradient(135deg,rgba(108,99,255,0.2),rgba(167,139,250,0.1));
+  border-radius: 16px; display: flex; align-items: center; justify-content: center;
+  font-size: 26px; margin: 0 auto 12px; border: 1px solid rgba(108,99,255,0.2);
+}
+.uz-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.uz-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+/* Btn row */
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 16px; }
+.btn {
+  padding: 13px 10px; border: 1.5px solid var(--border2); border-radius: var(--r-sm);
+  background: var(--bg3); font-family: 'Sora', sans-serif;
+  font-size: 13px; font-weight: 700; color: var(--text2); cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent2); background: rgba(108,99,255,0.1); }
+.btn-primary { border-color: var(--accent); background: rgba(108,99,255,0.15); color: var(--accent2); }
+.btn-primary:hover { background: rgba(108,99,255,0.25); }
+
+/* Preview */
+#preview-wrap { display: none; padding: 0 16px 14px; }
+#preview-img { width: 100%; border-radius: var(--r-sm); max-height: 260px; object-fit: contain; background: var(--bg3); border: 1px solid var(--border); }
+.preview-ok { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--green); margin-top: 8px; font-weight: 600; }
+
+/* Voice */
+.voice-row { display: flex; align-items: center; gap: 10px; padding: 14px 16px 0; }
+.btn-voice {
+  display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 30px;
+  border: 1.5px solid rgba(244,63,94,0.3); background: rgba(244,63,94,0.08);
+  color: var(--red); font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.btn-voice:hover { background: rgba(244,63,94,0.15); border-color: var(--red); }
+.btn-voice.recording { background: var(--red); color: white; border-color: var(--red); animation: rec-pulse 1s ease-in-out infinite; }
+@keyframes rec-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,0.4)} 50%{box-shadow:0 0 0 8px rgba(244,63,94,0)} }
+.voice-tip { font-size: 11px; color: var(--text3); }
+
+/* Question */
+.q-wrap { padding: 12px 16px 16px; }
+.q-label { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+.q-optional { font-size: 10px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 20px; padding: 2px 8px; color: var(--text3); text-transform: none; letter-spacing: 0; }
+.q-input {
+  width: 100%; background: var(--bg3); border: 1.5px solid var(--border2);
+  border-radius: var(--r-sm); padding: 12px 14px;
+  font-family: 'Noto Sans Devanagari', 'Sora', sans-serif; font-size: 14px;
+  color: var(--text); resize: none; min-height: 80px; transition: border-color 0.2s; line-height: 1.6;
+}
+.q-input::placeholder { color: var(--text3); font-size: 13px; }
+.q-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,99,255,0.1); }
+.q-hint { font-size: 11px; color: var(--text3); margin-top: 6px; }
+
+/* Evaluate btn */
+.eval-wrap { padding: 4px 16px 0; }
+.btn-evaluate {
+  width: 100%; padding: 18px; border: none; border-radius: var(--r-sm);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  color: white; font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 800;
+  cursor: pointer; transition: all 0.25s; letter-spacing: 0.2px;
+  display: flex; align-items: center; justify-content: center; gap: 8px; position: relative; overflow: hidden;
+}
+.btn-evaluate::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg,rgba(255,255,255,0.15),transparent); opacity: 0; transition: opacity 0.2s; }
+.btn-evaluate:hover::before { opacity: 1; }
+.btn-evaluate:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(108,99,255,0.45); }
+.btn-evaluate:disabled { background: var(--surface2); color: var(--text3); transform: none; box-shadow: none; cursor: not-allowed; }
+
+/* Error */
+.error-box { margin: 10px 16px 0; background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.25); border-radius: var(--r-sm); padding: 14px 16px; font-size: 13px; color: var(--red); display: none; }
+
+/* Loading */
+#loading { display: none; padding: 80px 24px; text-align: center; }
+.loader-ring { width: 56px; height: 56px; border: 3px solid var(--surface2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 20px; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loader-title { font-size: 16px; font-weight: 700; }
+.loader-sub { font-size: 13px; color: var(--text3); margin-top: 6px; font-family: 'Noto Sans Devanagari', sans-serif; }
+.loader-dots { display: flex; justify-content: center; gap: 6px; margin-top: 20px; }
+.ldot { width: 6px; height: 6px; background: var(--surface2); border-radius: 50%; animation: ldot 1.4s ease-in-out infinite; }
+.ldot:nth-child(2){animation-delay:0.2s} .ldot:nth-child(3){animation-delay:0.4s}
+@keyframes ldot { 0%,80%,100%{background:var(--surface2)} 40%{background:var(--accent2)} }
+
+/* Result */
+#result-wrap { display: none; }
+
+.score-card { margin: 0 16px 12px; border-radius: var(--r); overflow: hidden; }
+.score-bg {
+  background: linear-gradient(135deg, #1a1a3e 0%, #0f0f2e 100%);
+  border: 1px solid rgba(108,99,255,0.2);
+  padding: 32px 24px 24px; text-align: center; position: relative; overflow: hidden;
+}
+.score-bg::before { content: ''; position: absolute; top: -60px; left: 50%; transform: translateX(-50%); width: 220px; height: 220px; background: radial-gradient(circle,rgba(108,99,255,0.25) 0%,transparent 70%); }
+.score-num {
+  font-size: 80px; font-weight: 800; line-height: 1;
+  background: linear-gradient(135deg,#fff 30%,var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  position: relative;
+}
+.score-denom { font-size: 24px; color: var(--text3); font-weight: 500; }
+.grade-pill { display: inline-block; padding: 6px 22px; border-radius: 30px; border: 1.5px solid rgba(108,99,255,0.4); background: rgba(108,99,255,0.15); font-size: 20px; font-weight: 800; color: var(--accent2); margin-top: 10px; }
+.subject-chip { display: inline-block; font-size: 11px; color: var(--text3); margin-top: 8px; background: rgba(255,255,255,0.05); border-radius: 20px; padding: 3px 12px; }
+.prog-wrap { padding: 0 0 4px; }
+.prog-bar { height: 5px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; margin-top: 16px; }
+.prog-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg,var(--accent),var(--accent2)); transition: width 1s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+.prog-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* Feedback card */
+.fb-card { margin: 0 16px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.fb-head { padding: 12px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+.fb-ico { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.fb-ttl { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; }
+.fb-body { padding: 14px 18px; font-size: 14px; color: var(--text2); line-height: 1.75; }
+.fb-body.deva { font-family: 'Noto Sans Devanagari', sans-serif; }
+
+.list-item { display: flex; gap: 10px; align-items: flex-start; padding: 9px 18px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); line-height: 1.5; }
+.list-item:last-child { border-bottom: none; }
+.ibadge { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; margin-top: 1px; }
+.ib-red { background: rgba(244,63,94,0.12); color: var(--red); }
+.ib-green { background: rgba(16,185,129,0.12); color: var(--green); }
+.ib-purple { background: rgba(192,132,252,0.12); color: var(--purple); }
+.ib-blue { background: rgba(56,189,248,0.12); color: var(--blue); }
+
+/* Reset */
+.reset-wrap { padding: 4px 16px 0; }
+.btn-reset { width: 100%; padding: 15px; border: 1.5px solid var(--border2); border-radius: var(--r-sm); background: transparent; font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; color: var(--text2); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-reset:hover { border-color: var(--accent); color: var(--accent2); background: rgba(108,99,255,0.07); }
+
+.footer { text-align: center; padding: 28px 24px 0; font-size: 11px; color: var(--text3); line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-icon">✍️</div>
+    <div class="app-name">UttarCheck</div>
+    <div class="app-tagline">हस्तलिखित उत्तरों का AI मूल्यांकन</div>
+    <div class="gemma-pill"><div class="live-dot"></div>Powered by Gemma 4 · On-Device AI</div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div id="upload-section">
+    <div class="s-label">Subject चुनें</div>
+    <div class="card">
+      <div class="chips">
+        <div class="chip" onclick="sel(this,'Math')">📐 Math</div>
+        <div class="chip" onclick="sel(this,'Science')">🔬 Science</div>
+        <div class="chip" onclick="sel(this,'Hindi')">🇮🇳 Hindi</div>
+        <div class="chip" onclick="sel(this,'English')">🔤 English</div>
+        <div class="chip" onclick="sel(this,'Social Science')">🌍 SST</div>
+        <div class="chip active" onclick="sel(this,'')">🤖 Auto</div>
+      </div>
+    </div>
+
+    <div class="s-label">Answer Sheet Upload करें</div>
+    <div class="upload-zone" id="uz">
+      <input type="file" id="file-input" accept="image/*" onchange="handleFile(this)">
+      <div class="uz-icon">📄</div>
+      <div class="uz-title">Answer sheet यहाँ drop करें</div>
+      <div class="uz-sub">Tap करें या drag & drop</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="document.getElementById('cam-input').click()">📷 Camera</button>
+      <button class="btn" onclick="document.getElementById('gal-input').click()">🖼️ Gallery</button>
+    </div>
+    <input type="file" id="cam-input" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this)">
+    <input type="file" id="gal-input" accept="image/*" style="display:none" onchange="handleFile(this)">
+    <div id="preview-wrap">
+      <img id="preview-img" src="" alt="Preview">
+      <div class="preview-ok">✅ Photo ready hai!</div>
+    </div>
+
+    <div class="s-label">Question (Optional)</div>
+    <div class="card">
+      <div class="voice-row">
+        <button class="btn-voice" id="voice-btn" onclick="toggleVoice()">🎤 Bolke type karo</button>
+        <span class="voice-tip">Hindi ya English mein bolo</span>
+      </div>
+      <div class="q-wrap">
+        <div class="q-label">Question likho <span class="q-optional">Optional</span></div>
+        <textarea id="q-input" class="q-input" placeholder="Question yahan type karo...&#10;जैसे: 'प्रकाश संश्लेषण क्या है?'" rows="3"></textarea>
+        <div class="q-hint">💡 Question dene se evaluation zyada accurate hogi</div>
+      </div>
+    </div>
+
+    <div class="eval-wrap">
+      <button class="btn-evaluate" id="eval-btn" disabled>✨ Evaluate Karo</button>
+    </div>
+    <div class="error-box" id="err-box"></div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading">
+    <div class="loader-ring"></div>
+    <div class="loader-title">Gemma 4 analyse kar raha hai...</div>
+    <div class="loader-sub">हस्तलेख पढ़ा जा रहा है, कृपया प्रतीक्षा करें</div>
+    <div class="loader-dots"><div class="ldot"></div><div class="ldot"></div><div class="ldot"></div></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-wrap">
+    <div class="score-card">
+      <div class="score-bg">
+        <div class="score-num" id="res-score">0<span class="score-denom">/10</span></div>
+        <div class="grade-pill" id="res-grade">-</div>
+        <div class="subject-chip" id="res-subj"></div>
+        <div class="prog-wrap">
+          <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+          <div class="prog-labels"><span>0</span><span id="prog-max">10</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fb-card">
+      <div class="fb-head"><div class="fb-ico" style="background:rgba(245,158,11,0.12);color:#F59E0B;">🇮🇳</div><div class="fb-ttl">हिंदी में Feedback</div></div>
+      <div class="fb-body deva" id="res-hindi"></div>
+    </div>
+    <div class="fb-card">
+      <div class="fb-head"><div class="fb-ico" style="background:rgba(56,189,248,0.12);color:var(--blue);">🔤</div><div class="fb-ttl">English Feedback</div></div>
+      <div class="fb-body" id="res-english"></div>
+    </div>
+    <div class="fb-card">
+      <div class="fb-head"><div class="fb-ico" style="background:rgba(244,63,94,0.12);color:var(--red);">❌</div><div class="fb-ttl">Galtiyan (Mistakes)</div></div>
+      <div id="res-mistakes"></div>
+    </div>
+    <div class="fb-card">
+      <div class="fb-head"><div class="fb-ico" style="background:rgba(16,185,129,0.12);color:var(--green);">✅</div><div class="fb-ttl">Sahi Baatein</div></div>
+      <div id="res-correct"></div>
+    </div>
+    <div class="fb-card">
+      <div class="fb-head"><div class="fb-ico" style="background:rgba(192,132,252,0.12);color:var(--purple);">💡</div><div class="fb-ttl">Improvement Tips</div></div>
+      <div id="res-tips"></div>
+    </div>
+    <div class="fb-card">
+      <div class="fb-head"><div class="fb-ico" style="background:rgba(56,189,248,0.12);color:var(--blue);">📖</div><div class="fb-ttl">Perfect Answer Hint</div></div>
+      <div class="fb-body" id="res-hint"></div>
+    </div>
+
+    <div class="reset-wrap">
+      <button class="btn-reset" onclick="resetApp()">🔄 Doosra Answer Evaluate Karo</button>
+    </div>
+  </div>
+
+  <div class="footer">UttarCheck · Gemma 4 · Made for Indian Students<br>Class 6–12 · NCERT Curriculum · Hindi + English</div>
+</div>
+
+<script>
+let selFile=null, selSubj='', recog=null, isRec=false;
+
+function sel(el,v){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');selSubj=v;}
+
+function handleFile(inp){
+  const f=inp.files[0];if(!f)return;selFile=f;
+  const r=new FileReader();
+  r.onload=e=>{
+    document.getElementById('preview-img').src=e.target.result;
+    document.getElementById('preview-wrap').style.display='block';
+    document.getElementById('uz').classList.add('has-file');
+    document.getElementById('eval-btn').disabled=false;
+  };r.readAsDataURL(f);
+}
+
+const uz=document.getElementById('uz');
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag');});
+uz.addEventListener('dragleave',()=>uz.classList.remove('drag'));
+uz.addEventListener('drop',e=>{
+  e.preventDefault();uz.classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/')){selFile=f;const r=new FileReader();r.onload=ev=>{document.getElementById('preview-img').src=ev.target.result;document.getElementById('preview-wrap').style.display='block';uz.classList.add('has-file');document.getElementById('eval-btn').disabled=false;};r.readAsDataURL(f);}
+});
+
+function toggleVoice(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('Chrome browser use karein voice ke liye.');return;}
+  if(isRec){recog.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recog=new SR();recog.lang='hi-IN';recog.interimResults=false;recog.maxAlternatives=1;
+  recog.onstart=()=>{isRec=true;const b=document.getElementById('voice-btn');b.classList.add('recording');b.textContent='⏹ Recording...';};
+  recog.onresult=e=>{const t=e.results[0][0].transcript;const qi=document.getElementById('q-input');qi.value+=(qi.value?' ':'')+t;};
+  recog.onend=()=>{isRec=false;const b=document.getElementById('voice-btn');b.classList.remove('recording');b.innerHTML='🎤 Bolke type karo';};
+  recog.start();
+}
+
+async function runEvaluate(){
+  if(!selFile)return;
+  document.getElementById('upload-section').style.display='none';
+  document.getElementById('loading').style.display='block';
+  document.getElementById('result-wrap').style.display='none';
+  const fd=new FormData();
+  fd.append('image',selFile);fd.append('subject',selSubj);
+  fd.append('question',document.getElementById('q-input').value.trim());
+  try{
+    const res=await fetch('/evaluate',{method:'POST',body:fd});
+    const data=await res.json();
+    document.getElementById('loading').style.display='none';
+    if(data.success){showResult(data);}
+    else{showErr(data.error||'Kuch galat hua. Dobara try karo.');}
+  }catch(e){document.getElementById('loading').style.display='none';showErr('Server se connect nahi ho paya.');}
+}
+
+function showResult(r){
+  const score=r.score??0,max=r.max_score??10;
+  document.getElementById('res-score').innerHTML=`${score}<span class="score-denom">/${max}</span>`;
+  document.getElementById('res-grade').textContent=r.grade??'-';
+  document.getElementById('prog-max').textContent=max;
+  const qi=document.getElementById('q-input').value.trim();
+  const qs=qi||r.question_detected||'';
+  let st=r.subject?`📚 ${r.subject}`:'';
+  if(qs)st+=(st?'  ·  ':'')+`❓ ${qs.substring(0,50)}${qs.length>50?'...':''}`;
+  document.getElementById('res-subj').textContent=st;
+  document.getElementById('res-hindi').textContent=r.hindi_feedback??'';
+  document.getElementById('res-english').textContent=r.english_feedback??'';
+  document.getElementById('res-hint').textContent=r.model_answer_hint??'';
+  setTimeout(()=>{document.getElementById('prog-fill').style.width=Math.round((score/max)*100)+'%';},300);
+  mkList(r.mistakes,'res-mistakes','ib-red','✗');
+  mkList(r.correct_points,'res-correct','ib-green','✓');
+  mkList(r.improvement_tips,'res-tips','ib-purple','→');
+  document.getElementById('result-wrap').style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function mkList(items,id,cls,sym){
+  const el=document.getElementById(id);el.innerHTML='';
+  (items||[]).forEach(item=>{el.innerHTML+=`<div class="list-item"><div class="ibadge ${cls}">${sym}</div><span>${item}</span></div>`;});
+  if(!items||!items.length)el.innerHTML='<div class="list-item" style="color:var(--text3)">Koi point nahi mila</div>';
+}
+
+function showErr(msg){
+  document.getElementById('upload-section').style.display='block';
+  const eb=document.getElementById('err-box');eb.textContent='❌ '+msg;eb.style.display='block';
+}
+
+function resetApp(){
+  selFile=null;selSubj='';
+  document.getElementById('upload-section').style.display='block';
+  document.getElementById('result-wrap').style.display='none';
+  document.getElementById('loading').style.display='none';
+  document.getElementById('preview-wrap').style.display='none';
+  document.getElementById('uz').classList.remove('has-file');
+  document.getElementById('eval-btn').disabled=true;
+  document.getElementById('err-box').style.display='none';
+  document.getElementById('q-input').value='';
+  document.getElementById('file-input').value='';
+  document.getElementById('cam-input').value='';
+  document.getElementById('gal-input').value='';
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  document.querySelector('.chip:last-child').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.getElementById("eval-btn").addEventListener("click", runEvaluate);
+</script>
+</body>
+</html>
